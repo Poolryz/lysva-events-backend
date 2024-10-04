@@ -4,6 +4,8 @@ const cors = require("cors");
 const port = 3000;
 const mongoose = require("mongoose");
 const Event = require("./models/Event");
+const Login = require("./models/Login");
+
 app.use(cors());
 
 // Подключаемся к MongoDB
@@ -31,6 +33,22 @@ app.post("/events", async (req, res) => {
 		res.status(201).json(newEvent);
 	} catch (error) {
 		res.status(500).json({ message: "Ошибка при создании мероприятия", error });
+	}
+});
+app.post("/login", async (req, res) => {
+	const { login, password } = req.body;
+
+	try {
+		const newLogin = new Login({
+			login,
+			password,
+		});
+		await newLogin.save();
+		res.json({
+			token: "your-jwt-token-here",
+		});
+	} catch (error) {
+		res.status(500).json({ message: "Ошибка при создании логина", error });
 	}
 });
 
@@ -100,11 +118,6 @@ app.delete("/events/:id", async (req, res) => {
 	} catch (error) {
 		res.status(500).json({ message: "Ошибка при удалении мероприятия", error });
 	}
-});
-
-// Тестовый маршрут
-app.get("/", (req, res) => {
-	res.send("Привет, Лысьва!");
 });
 
 app.listen(port, () => {
