@@ -27,11 +27,6 @@ function authenticateToken(req, res, next) {
 	});
 }
 
-// Пример защищенного маршрута
-app.get("/protected-route", authenticateToken, (req, res) => {
-	res.json({ message: "Доступ разрешен", user: req.user });
-});
-
 // Подключаемся к MongoDB
 mongoose
 	.connect(
@@ -50,7 +45,7 @@ app.post("/events", authenticateToken, async (req, res) => {
 			description,
 			date,
 			location,
-			createdBy: req.user.username,
+			createdBy,
 		});
 		await newEvent.save();
 		res.status(201).json(newEvent);
