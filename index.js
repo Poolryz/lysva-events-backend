@@ -4,9 +4,33 @@ const cors = require("cors");
 const port = 3000;
 const mongoose = require("mongoose");
 const Event = require("./models/Event");
+const jwt = require("jsonwebtoken");
 const Login = require("./models/Login");
 
+const JWT_SECRET = "your-secret-key"; // Секрет для генерации токенов (должен быть более сложным и безопасным в реальном проекте)
+
+// Middleware
 app.use(cors());
+app.use(express.json()); // Для обработки JSON данных
+
+function authenticateToken(req, res, next) {
+	const authHeader = req.headers["authorization"];
+	const token = authHeader && authHeader.split(" ")[1]; // Достаём токен из заголовка
+
+	if (!token) return res.sendStatus(401); // Если токена нет, возвращаем 401 Unauthorized
+
+	// Проверяем валидность токена
+	jwt.verify(token, "your-secret-key", (err, user) => {
+		if (err) return res.sendStatus(403); // Если токен невалиден, возвращаем 403 Forbidden
+		req.user = user; // Сохраняем данные пользователя для дальнейшего использования
+		next(); // Переходим к следующему middleware или маршруту
+	});
+}
+
+// Пример защищенного маршрута
+app.get("/protected-route", authenticateToken, (req, res) => {
+	res.json({ message: "Доступ разрешен", user: req.user });
+});
 
 // Подключаемся к MongoDB
 mongoose
@@ -17,8 +41,7 @@ mongoose
 	.catch((err) => console.log("Ошибка подключения к MongoDB:", err));
 
 //Создание маршрутов (routes)
-app.use(express.json()); // Для обработки JSON данных
-app.post("/events", async (req, res) => {
+app.post("/events", authenticateToken, async (req, res) => {
 	const { title, description, date, location, createdBy } = req.body;
 
 	try {
@@ -27,7 +50,7 @@ app.post("/events", async (req, res) => {
 			description,
 			date,
 			location,
-			createdBy,
+			createdBy: req.user.username,
 		});
 		await newEvent.save();
 		res.status(201).json(newEvent);
@@ -39,16 +62,24 @@ app.post("/login", async (req, res) => {
 	const { login, password } = req.body;
 
 	try {
-		const newLogin = new Login({
-			login,
-			password,
-		});
-		await newLogin.save();
-		res.json({
-			token: "your-jwt-token-here",
-		});
+		// Находим пользователя по логину и паролю
+		const user = await Login.findOne({ login, password });
+
+		if (!user) {
+			return res.json({ message: "Неверный логин или пароль" });
+		}
+
+		// Генерация JWT-токена
+		const token = jwt.sign(
+			{ userId: user._id, login: user.login }, // Данные для включения в токен
+			JWT_SECRET, // Секретный ключ
+			{ expiresIn: "1h" }, // Время жизни токена
+		);
+
+		// Возвращаем токен клиенту
+		res.json({ token });
 	} catch (error) {
-		res.status(500).json({ message: "Ошибка при создании логина", error });
+		res.status(500).json({ message: "Ошибка на сервере", error });
 	}
 });
 
