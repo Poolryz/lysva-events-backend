@@ -5,7 +5,7 @@ const eventSchema = new mongoose.Schema({
 	description: String,
 	date: Date,
 	location: String,
-	createdBy: String, // имя или ID пользователя
+	userId: String,
 });
 
 module.exports = mongoose.model("Event", eventSchema);

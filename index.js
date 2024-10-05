@@ -37,7 +37,7 @@ mongoose
 
 //Создание маршрутов (routes)
 app.post("/events", authenticateToken, async (req, res) => {
-	const { title, description, date, location, createdBy } = req.body;
+	const { title, description, date, location, userId } = req.body;
 
 	try {
 		const newEvent = new Event({
@@ -45,7 +45,7 @@ app.post("/events", authenticateToken, async (req, res) => {
 			description,
 			date,
 			location,
-			createdBy,
+			userId,
 		});
 		await newEvent.save();
 		res.status(201).json(newEvent);
