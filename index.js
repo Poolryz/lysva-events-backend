@@ -6,12 +6,57 @@ const mongoose = require("mongoose");
 const Event = require("./models/Event");
 const jwt = require("jsonwebtoken");
 const Login = require("./models/Login");
+const multer = require('multer');
+const slugify = require('slugify');
 
 const JWT_SECRET = "your-secret-key"; // Секрет для генерации токенов (должен быть более сложным и безопасным в реальном проекте)
+
+const path = require('path');
+
+const urls={
+    localhost: "mongodb://localhost:27017/lysva-events",
+    public: "mongodb+srv://savinovdanil:120698daOKLICKMQVGYJkb@cluster0.g1ybj.mongodb.net/lysva-events?retryWrites=true&w=majority&appName=Cluster0"
+}
+
+
+function urlChanger(){
+    let dev = false
+    if (dev){
+        return urls.localhost
+    }
+else{
+    return urls.public
+}
+
+}
+
+
+// Настраиваем хранилище для файлов
+
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/');
+  },
+  filename: function (req, file, cb) {
+    // Преобразуем имя файла в ASCII (замена пробелов и кириллицы)
+    const safeFilename = slugify(Date.now() + '-' + file.originalname, {
+      replacement: '_',    // Замена пробелов на нижнее подчеркивание
+      remove: /[^a-zA-Z0-9._-]/g, // Удалить все, кроме букв, цифр, точек и дефисов
+      lower: false,        // Не преобразовывать в нижний регистр
+    });
+    cb(null, safeFilename);
+  }
+});
+
+  const upload = multer({ storage: storage });
 
 // Middleware
 app.use(cors());
 app.use(express.json()); // Для обработки JSON данных
+
+// Статический доступ к папке uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 function authenticateToken(req, res, next) {
 	const authHeader = req.headers["authorization"];
@@ -30,14 +75,15 @@ function authenticateToken(req, res, next) {
 // Подключаемся к MongoDB
 mongoose
 	.connect(
-		"mongodb+srv://savinovdanil:120698daOKLICKMQVGYJkb@cluster0.g1ybj.mongodb.net/lysva-events?retryWrites=true&w=majority&appName=Cluster0",
+		urlChanger()
 	)
 	.then(() => console.log("MongoDB подключена"))
 	.catch((err) => console.log("Ошибка подключения к MongoDB:", err));
 
 //Создание маршрутов (routes)
-app.post("/events", authenticateToken, async (req, res) => {
+app.post("/events", authenticateToken, upload.single('image'), async (req, res) => {
 	const { title, description, date, location, userId } = req.body;
+	const imagePath = req.file ? path.posix.join('uploads', req.file.filename) : null;
 
 	try {
 		const newEvent = new Event({
@@ -46,6 +92,7 @@ app.post("/events", authenticateToken, async (req, res) => {
 			date,
 			location,
 			userId,
+			image: imagePath, // Сохраняем путь к изображению
 		});
 		await newEvent.save();
 		res.status(201).json(newEvent);
@@ -53,6 +100,7 @@ app.post("/events", authenticateToken, async (req, res) => {
 		res.status(500).json({ message: "Ошибка при создании мероприятия", error });
 	}
 });
+
 app.post("/login", async (req, res) => {
 	const { login, password } = req.body;
 

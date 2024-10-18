@@ -6,6 +6,7 @@ const eventSchema = new mongoose.Schema({
 	date: Date,
 	location: String,
 	userId: String,
+	image: String, // Добавляем поле для хранения пути к изображению
 });
 
 module.exports = mongoose.model("Event", eventSchema);
