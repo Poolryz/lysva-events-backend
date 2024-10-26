@@ -116,7 +116,7 @@ app.post("/login", async (req, res) => {
 		const token = jwt.sign(
 			{ userId: user._id, login: user.login }, // Данные для включения в токен
 			JWT_SECRET, // Секретный ключ
-			{ expiresIn: "1h" }, // Время жизни токена
+			{ expiresIn: "24h" }, // Время жизни токена
 		);
 
 		// Возвращаем токен клиенту
@@ -156,28 +156,35 @@ app.get("/events/:id", async (req, res) => {
 });
 
 // Обновление мероприятия по ID
-app.put("/events/:id", async (req, res) => {
+app.put("/events/:id", upload.single('image'), async (req, res) => {
 	const { id } = req.params;
 	const { title, description, date, location, createdBy } = req.body;
-
-	try {
-		const updatedEvent = await Event.findByIdAndUpdate(
-			id,
-			{ title, description, date, location, createdBy },
-			{ new: true }, // Возвращает обновлённый документ
-		);
-
-		if (!updatedEvent) {
-			return res.status(404).json({ message: "Мероприятие не найдено" });
-		}
-
-		res.json(updatedEvent);
-	} catch (error) {
-		res
-			.status(500)
-			.json({ message: "Ошибка при обновлении мероприятия", error });
+	let image = req.body.image;
+  
+	// Проверяем, было ли загружено новое изображение
+	if (req.file) {
+	  image = `uploads/${req.file.filename}`; // Обновляем путь к файлу изображения
 	}
-});
+  
+	try {
+	  const updatedEvent = await Event.findByIdAndUpdate(
+		id,
+		{ title, description, date, location, createdBy, image },
+		{ new: true }, // Возвращает обновлённый документ
+	  );
+  
+	  if (!updatedEvent) {
+		return res.status(404).json({ message: "Мероприятие не найдено" });
+	  }
+  
+	  res.json(updatedEvent);
+	} catch (error) {
+	  res
+		.status(500)
+		.json({ message: "Ошибка при обновлении мероприятия", error });
+	}
+  });
+  
 
 // Удаление мероприятия по ID
 app.delete("/events/:id", async (req, res) => {
