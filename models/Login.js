@@ -1,8 +1,10 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
-const eventSchema = new mongoose.Schema({
-	login: String,
-	password: String,
+const loginSchema = new mongoose.Schema({
+  login: { type: String, required: true },
+  password: { type: String, required: true },
 });
 
-module.exports = mongoose.model("Login", eventSchema);
+const Login = mongoose.model("Login", loginSchema);
+
+export default Login;

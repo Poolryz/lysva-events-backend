@@ -1,12 +1,15 @@
-const mongoose = require("mongoose");
+// Event.js
+import mongoose from "mongoose";
 
 const eventSchema = new mongoose.Schema({
-	title: String,
-	description: String,
-	date: Date,
-	location: String,
-	userId: String,
-	image: String, // Добавляем поле для хранения пути к изображению
+  title: String,
+  description: String,
+  date: Date,
+  location: String,
+  userId: mongoose.Schema.Types.ObjectId,
+  image: String,
 });
 
-module.exports = mongoose.model("Event", eventSchema);
+const Event = mongoose.model("Event", eventSchema);
+
+export default Event; // Экспортируем как default
