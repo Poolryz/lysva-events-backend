@@ -11,8 +11,9 @@ const app = express();
 const port = 3000;
 const __dirname = path.resolve();
 app.use(cors({
-  origin: 'https://lysvalife.ru', // Разрешить только этот источник
-  credentials: true, // Если нужны cookie или заголовки авторизации
+    origin: "https://lysvalife.ru",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
 }));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
