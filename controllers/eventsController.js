@@ -10,7 +10,7 @@ export const getEvents = async (req, res) => {
 	}
 };
 export const createEvent = async (req, res) => {
-	const { title, description, date, location, userId } = req.body;
+	const { title, description, date, endDate, time, dateType, location, userId } = req.body;
 	const imagePath = req.file ? path.posix.join('uploads', req.file.filename) : null;
 
 	try {
@@ -18,6 +18,9 @@ export const createEvent = async (req, res) => {
 			title,
 			description,
 			date,
+			endDate,
+			time,
+			dateType,
 			location,
 			userId,
 			image: imagePath, // Сохраняем путь к изображению
